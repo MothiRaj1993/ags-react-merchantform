@@ -10,7 +10,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 mongoose.connect(
-  "mongodb+srv://mothirajm:MothiAarthi%402210@mothiraj.spbyd2f.mongodb.net/MFDatas",
+  "mongodb+srv://mothirajm:EnterthePassword@mothiraj.spbyd2f.mongodb.net/MFDatas",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
