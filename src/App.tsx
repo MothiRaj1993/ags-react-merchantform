@@ -5,6 +5,9 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import Header from "./Header";
 import InputFields from "./InputFields";
 import FilterData from "./FilterData";
+import axios from "axios";
+
+const serverUrl = "http://localhost:3050/api/data";
 
 const initialFormData: inputData = {
   fname: "",
@@ -30,14 +33,21 @@ const Multiple: React.FC = () => {
   const [filterPaymentOption, setFilterPaymentOption] = useState<string | null>(
     null
   );
-
   const [filteredData, setFilteredData] = useState<inputData[]>(submittedData);
+
   useEffect(() => {
-    const storedSubmittedData = localStorage.getItem("submittedData");
-    if (storedSubmittedData) {
-      setSubmittedData(JSON.parse(storedSubmittedData));
-    }
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(serverUrl);
+        setSubmittedData(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
   }, []);
+
   const navigate = useNavigate();
   const handleInputChange = (
     event: ChangeEvent<
@@ -48,38 +58,58 @@ const Multiple: React.FC = () => {
     setformData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    setSubmittedData((prevData) => {
-      let updatedData;
+    try {
       if (editingIndex !== null) {
-        updatedData = [...prevData];
-        updatedData[editingIndex] = formData;
+        const updatedData = await axios.put(
+          `${serverUrl}/${submittedData[editingIndex]._id}`,
+          formData
+        );
+        setSubmittedData((prevData) => {
+          const updatedDataArray = [...prevData];
+          updatedDataArray[editingIndex] = updatedData.data;
+          return updatedDataArray;
+        });
+
+        setformData(initialFormData);
+        setEditingIndex(null);
       } else {
-        updatedData = [...prevData, formData];
+        await axios.post(serverUrl, formData);
+        setSubmittedData((prevData) => {
+          let updatedData;
+          if (editingIndex !== null) {
+            updatedData = [...prevData];
+            updatedData[editingIndex] = formData;
+          } else {
+            updatedData = [...prevData, formData];
+          }
+          return updatedData;
+        });
       }
 
-      localStorage.setItem("submittedData", JSON.stringify(updatedData));
-
-      return updatedData;
-    });
-
-    setformData(initialFormData);
-    setEditingIndex(null);
-    navigate("/outputtable");
+      setformData(initialFormData);
+      setEditingIndex(null);
+      navigate("/outputtable");
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleEdit = (data: inputData, index: number) => {
     setformData(data);
     setEditingIndex(index);
   };
-  const handleDelete = (index: number) => {
-    const updatedData = [...submittedData];
-    updatedData.splice(index, 1);
-    setSubmittedData(updatedData);
-
-    localStorage.setItem("submittedData", JSON.stringify(updatedData));
+  const handleDelete = async (index: number) => {
+    try {
+      await axios.delete(`${serverUrl}/${submittedData[index]._id}`);
+      const updatedData = [...submittedData];
+      updatedData.splice(index, 1);
+      setSubmittedData(updatedData);
+    } catch (error) {
+      console.error(error);
+    }
   };
   const handlePaymentOptionChange = (event: ChangeEvent<HTMLInputElement>) => {
     setFilterPaymentOption(event.target.value);
@@ -133,14 +163,6 @@ const Multiple: React.FC = () => {
           path="/outputtable"
           element={
             <>
-              <FilterData
-                filterType={filterType}
-                filterPaymentOption={filterPaymentOption}
-                setFilterType={setFilterType}
-                handlePaymentOptionChange={handlePaymentOptionChange}
-                applyFilter={applyFilter}
-                clearFilter={clearFilter}
-              />
               <OutputTable
                 submittedData={
                   filteredData.length ? filteredData : submittedData
@@ -148,6 +170,14 @@ const Multiple: React.FC = () => {
                 setSubmittedData={setSubmittedData}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+              />
+              <FilterData
+                filterType={filterType}
+                filterPaymentOption={filterPaymentOption}
+                setFilterType={setFilterType}
+                handlePaymentOptionChange={handlePaymentOptionChange}
+                applyFilter={applyFilter}
+                clearFilter={clearFilter}
               />
             </>
           }

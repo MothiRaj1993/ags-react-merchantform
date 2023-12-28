@@ -1,5 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
+const serverUrl = "http://localhost:3050/api/data";
 
 const OutputTable: React.FC<PropsType> = ({
   submittedData,
@@ -7,6 +10,16 @@ const OutputTable: React.FC<PropsType> = ({
   onEdit,
   onDelete,
 }) => {
+  const handleDelete = async (index: number) => {
+    try {
+      const updatedData = [...submittedData];
+      updatedData.splice(index, 1);
+      setSubmittedData(updatedData);
+      await axios.delete(`${serverUrl}/${submittedData[index]._id}`);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   return (
     <>
       <table
@@ -61,7 +74,10 @@ const OutputTable: React.FC<PropsType> = ({
                       Edit
                     </Link>
                   </button>
-                  <button className="delButton" onClick={() => onDelete(index)}>
+                  <button
+                    className="delButton"
+                    onClick={() => handleDelete(index)}
+                  >
                     Delete
                   </button>
                 </center>
@@ -72,7 +88,7 @@ const OutputTable: React.FC<PropsType> = ({
       </table>
       <>
         <button className="outputtablebtn">
-          <Link style={{ color: "white" }} to="/">
+          <Link style={{ color: "black" }} to="/">
             Home
           </Link>
         </button>

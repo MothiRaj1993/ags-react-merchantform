@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 interface FormDataFormProps {
   formData: inputData;
@@ -287,6 +288,12 @@ const FormDataForm: React.FC<FormDataFormProps> = ({
           </button>
           <button type="reset" id="reset" className="re-set buttonDesign">
             Reset
+          </button>
+          <br />
+          <button className="outputtablebtn">
+            <Link style={{ color: "black" }} to="/outputtable">
+              Show Datas
+            </Link>
           </button>
         </table>
       </form>
